@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Car/Truck CNN | U55C Accelerator Lab</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+  <link rel="stylesheet" href="/static/app.css?v=20260312b" />
+</head>
+<body>
+  <div class="bg-orb orb-a"></div>
+  <div class="bg-orb orb-b"></div>
+
+  <header class="topbar">
+    <div class="topbar-main">
+      <div class="brand-wrap">
+        <div class="brand">U55C CIFAR Car-vs-Truck Lab</div>
+        <div class="subtitle">CPU/FPGA profiling, runtime controls, documentation viewer, and architecture map</div>
+      </div>
+      <button id="theme-toggle" class="theme-toggle" type="button">Dark Mode</button>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="lab">Project Lab</button>
+    <button class="tab" data-tab="fpga">FPGA Runtime</button>
+    <button class="tab" data-tab="docs">Project Docs</button>
+    <button class="tab" data-tab="diagram">Block Diagram</button>
+  </nav>
+
+  <div id="final-iteration-banner" class="final-iteration-banner" hidden></div>
+
+  <main>
+    <section id="tab-lab" class="tab-panel active">
+      <div class="grid">
+        <article class="card">
+          <h2>CNN Inference Workbench (CPU + FPGA)</h2>
+          <div class="controls">
+            <label>Images
+              <input id="images" type="number" min="1" max="10000" value="100" />
+            </label>
+            <label>Benchmark Iterations
+              <input id="bench-iters" type="number" min="1" max="1000" value="1" />
+            </label>
+            <label>Seed
+              <input id="seed" type="number" value="1" />
+            </label>
+          </div>
+          <div class="actions-row">
+            <button id="run-cpu-btn" class="btn">Run CPU Profile</button>
+            <button id="run-fpga-btn" class="btn primary">Run FPGA Profile</button>
+            <button id="run-compare-btn" class="btn accent">Compare CPU vs FPGA</button>
+          </div>
+          <p id="lab-meta" class="meta">Ready.</p>
+
+          <h3>Visual Inference</h3>
+          <p class="hint">View a prepared CIFAR sample and run single-image inference to see what the network predicts.</p>
+          <div class="sample-infer-layout">
+            <div class="sample-preview-col">
+              <canvas id="sample-canvas" width="32" height="32" aria-label="CIFAR sample preview"></canvas>
+              <div class="actions-row">
+                <button id="sample-prev-btn" class="btn" type="button">Prev</button>
+                <button id="sample-next-btn" class="btn" type="button">Next</button>
+              </div>
+              <div class="controls stack">
+                <label>Sample Index
+                  <input id="sample-index" type="number" min="0" value="0" />
+                </label>
+              </div>
+              <div class="actions-row">
+                <button id="sample-load-btn" class="btn" type="button">Load Sample</button>
+              </div>
+              <p id="sample-meta" class="meta">Loading sample dataset...</p>
+            </div>
+            <div class="sample-results-col">
+              <div class="actions-row">
+                <button id="infer-cpu-btn" class="btn" type="button">Infer CPU</button>
+                <button id="infer-fpga-btn" class="btn primary" type="button">Infer FPGA</button>
+                <button id="infer-both-btn" class="btn accent" type="button">Infer CPU + FPGA</button>
+              </div>
+              <pre id="infer-summary" class="output small">No inference run yet.</pre>
+            </div>
+          </div>
+
+          <div class="trace-layout">
+            <div class="trace-col">
+              <h3>CPU Profile</h3>
+              <pre id="cpu-summary" class="output small">No CPU run yet.</pre>
+            </div>
+            <div class="trace-col">
+              <h3>FPGA Profile</h3>
+              <pre id="fpga-summary" class="output small">No FPGA run yet.</pre>
+            </div>
+          </div>
+
+          <h3>Compare Summary</h3>
+          <p class="hint">This stage focuses on runtime throughput and transfer/kernel timing for the new U55C port.</p>
+          <pre id="compare-summary" class="output small">Run compare to populate speedup and timing deltas.</pre>
+        </article>
+      </div>
+    </section>
+
+    <section id="tab-fpga" class="tab-panel">
+      <div class="grid two-col">
+        <article class="card">
+          <h2>FPGA Control + Benchmark</h2>
+          <div class="controls">
+            <label>Mode
+              <select id="bench-mode">
+                <option value="dry-run">dry-run</option>
+                <option value="cpu-ref">cpu-ref</option>
+                <option value="hw" selected>hw</option>
+              </select>
+            </label>
+            <label>Elements (images)
+              <input id="elements" type="number" min="1" value="100" />
+            </label>
+            <label>Iterations
+              <input id="iterations" type="number" min="1" max="1000" value="1" />
+            </label>
+            <label>Device
+              <input id="device" type="text" value="0" />
+            </label>
+            <label>Kernel
+              <input id="kernel" type="text" value="mlp_u55c" />
+            </label>
+          </div>
+          <div class="controls stack">
+            <label>XCLBIN Path
+              <input id="xclbin" type="text" placeholder="From project.env if blank" />
+            </label>
+          </div>
+          <div class="actions-row">
+            <button id="status-btn" class="btn">FPGA Status</button>
+            <button id="program-btn" class="btn warning">Program FPGA</button>
+            <button id="bench-btn" class="btn primary">Run Benchmark</button>
+          </div>
+        </article>
+
+        <article class="card">
+          <h2>Runtime Output</h2>
+          <p class="hint">Command lines, benchmark summaries, and diagnostics appear here.</p>
+          <pre id="runtime-log" class="output"></pre>
+        </article>
+      </div>
+    </section>
+
+    <section id="tab-docs" class="tab-panel">
+      <div class="grid two-col docs-grid">
+        <article class="card docs-index-card">
+          <h2>Documentation Index</h2>
+          <label>Document
+            <select id="docs-select"></select>
+          </label>
+          <p class="hint">Rendered HTML documentation for this project.</p>
+          <div id="docs-meta" class="hint"></div>
+          <h3>Table of Contents</h3>
+          <div id="docs-toc" class="docs-toc"></div>
+        </article>
+
+        <article class="card docs-viewer-card">
+          <h2>Document Viewer</h2>
+          <div id="docs-render" class="docs-render"></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="tab-diagram" class="tab-panel">
+      <div class="grid two-col diagram-grid">
+        <article class="card">
+          <h2>Interactive Architecture Map</h2>
+          <p class="hint">Click a block for details. Double-click blocks with subdiagrams to drill down.</p>
+          <div class="diagram-toolbar">
+            <button id="diagram-back-btn" class="btn" type="button">Back</button>
+            <button id="diagram-zoom-out-btn" class="btn" type="button">-</button>
+            <button id="diagram-zoom-in-btn" class="btn" type="button">+</button>
+            <button id="diagram-reset-btn" class="btn" type="button">Reset View</button>
+            <span id="diagram-breadcrumb" class="diagram-breadcrumb"></span>
+            <span id="diagram-zoom-readout" class="diagram-zoom-readout">100%</span>
+          </div>
+          <div id="diagram-wrap" class="diagram-wrap">
+            <svg id="diagram-svg" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Car/Truck architecture diagram"></svg>
+          </div>
+        </article>
+
+        <article class="card">
+          <h2>Block Details</h2>
+          <p id="block-details" class="block-details">Select a block to inspect implementation details.</p>
+          <h3>Flow Notes</h3>
+          <div id="flow-notes" class="flow-notes"></div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <script>window.PROJECT_UI_CONFIG = { themeKey: 'u55c_car_truck_theme' };</script>
+  <script src="/static/common_ui.js?v=20260312b"></script>
+  <script src="/static/app.js?v=20260312b"></script>
+</body>
+</html>
